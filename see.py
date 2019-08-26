@@ -4,7 +4,6 @@ import re
 from nltk.corpus import stopwords
 from Stemmer import Stemmer
 from nltk.stem import PorterStemmer
-import queue as Q
 
 stemmer = Stemmer('english')
 ps = PorterStemmer()
