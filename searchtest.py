@@ -16,7 +16,7 @@ def get_counts(text, field):
     itr = 0
     if 't' in text:
         if field == 'title' or field == 'all':
-            counts[0] = int(spl[itr]) * 100
+            counts[0] = int(spl[itr]) * 200
         itr += 1
     if 'b' in text:
         if field == 'body' or field == 'all':
@@ -24,23 +24,23 @@ def get_counts(text, field):
         itr += 1
     if 'c' in text:
         if field == 'category' or field == 'all':
-            counts[2] = int(spl[itr])
+            counts[2] = int(spl[itr]) * 20
         itr += 1
     if 'i' in text:
         if field == 'infobox' or field == 'all':
-            counts[3] = int(spl[itr])
+            counts[3] = int(spl[itr]) * 40
         itr += 1
     if 'e' in text:
-        if field == 'external' or field == 'all':
-            counts[4] = int(spl[itr])
+        if field == 'ext' or field == 'all':
+            counts[4] = int(spl[itr]) * 15
         itr += 1
     if 'r' in text:
-        if field == 'reference' or field == 'all':
-            counts[5] = int(spl[itr])
+        if field == 'ref' or field == 'all':
+            counts[5] = int(spl[itr]) * 10
         itr += 1
     return counts
 
-def getline(word, filename, field):
+def getline(word, field, filename):
     f = open(filename, "r")
     line = f.readline()
     while line:
@@ -61,8 +61,8 @@ def getline(word, filename, field):
         line = f.readline()
 
 def get_list(q, filename):
-    for word in q:
-        getline(word, filename, 'all')
+    for word, field in q:
+        getline(word, field, filename)
     for doc in doc_map.keys():
         count_map[doc] = sum(doc_map[doc])
 
@@ -74,6 +74,7 @@ def get_list(q, filename):
             break
         f = open('/home/vivek/PycharmProjects/Search_Engine/index/id_title_map.txt')
         id = str(i[0]) + ':'
+        #print(i[1])
         line = f.readline()
         while line:
             if line.startswith(id):
@@ -88,11 +89,34 @@ def get_list(q, filename):
 
 
 filename = '/home/vivek/PycharmProjects/Search_Engine/index/final.txt'
-query = "St. Bartholomew's Church, Ljubljana"
-split = re.split(r"[^A-Za-z0-9]+", query)
+query = "title:gandhi body:arjun infobox:gandhi category:gandhi ref:gandhi"
+field = ['title:', 'body:', 'category:', 'infobox:', 'external:', 'ref:']
 q = []
-for t in split:
-    t = stemmer.stemWord(t.lower())
-    q.append(t + ':')
-print(q)
+if any(f in query for f in field):
+    temp = re.split(':', query)
+    field = 'all'
+    for t in temp:
+        words = t.split()
+        for i in range(len(words)):
+            if i == len(words) - 1 and words[i] == 'title':
+                field = 'title'
+            elif i == len(words) - 1 and words[i] == 'body':
+                field = 'body'
+            elif i == len(words) - 1 and words[i] == 'category':
+                field = 'category'
+            elif i == len(words) - 1 and words[i] == 'infobox':
+                field = 'infobox'
+            elif i == len(words) - 1 and words[i] == 'ext':
+                field = 'ext'
+            elif i == len(words) - 1 and words[i] == 'ref':
+                field = 'ref'
+            else:
+                x = stemmer.stemWord(words[i].lower())
+                q.append((x + ':', field))
+else:
+    split = re.split(r"[^A-Za-z0-9]+", query)
+    q = []
+    for t in split:
+        t = stemmer.stemWord(t.lower())
+        q.append((t + ':', 'all'))
 get_list(q, filename)

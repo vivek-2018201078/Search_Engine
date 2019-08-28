@@ -12,6 +12,13 @@ stop_words = list(stopwords.words('english'))
 xml_loc = sys.argv[1]
 index_folder = sys.argv[2]
 
+title_total = 0
+body_total = 0
+category_total = 0
+infobox_total = 0
+external_total = 0
+reference_total = 0
+
 page_map = {}
 key_map = {}
 id_title_map = {}
@@ -47,6 +54,7 @@ def get_keys(string):
 
 
 def get_infobox(text):
+    global infobox_total
     data = re.findall(r'{{Infobox(.*?)}}', text, re.DOTALL)
     if not data:
         return
@@ -54,6 +62,7 @@ def get_infobox(text):
     for dat in data:
         temp = get_keys(dat)
         l = l + temp
+    infobox_total += len(l)
     if len(l) > 0:
         for key in l:
             if key != '':
@@ -64,11 +73,13 @@ def get_infobox(text):
 
 
 def get_references(text):
+    global reference_total
     data = re.findall(r'==References==(.*?)}}\n\n', text, re.DOTALL)
     if not data:
         return
     data = data[0]
     reference_keys = get_keys(data)
+    reference_total += len(reference_keys)
     for key in reference_keys:
         if key not in page_map:
             page_map[key] = [0, 0, 0, 0, 0, 1]
@@ -90,11 +101,13 @@ def get_keys_linewise(text):
     return l
 
 def get_cats(text):
+    global category_total
     data = re.findall(r'\[\[Category:(.*?)\]\]',  text, re.DOTALL)
     if not data:
         return
     for dat in data:
         cat_keys = get_keys(dat)
+        category_total += len(cat_keys)
         for key in cat_keys:
             if key == '':
                 continue
@@ -164,6 +177,7 @@ for event, elem in etree.iterparse(xml_loc, events = ('start', 'end')):
             title = str(elem.text)
             id_title_map[page_count] = title
             title_keys = get_keys(title)
+            title_total += len(title_keys)
             for key in title_keys:
                 if key not in page_map:
                     page_map[key] = [1, 0, 0, 0, 0, 0]
@@ -199,6 +213,7 @@ for event, elem in etree.iterparse(xml_loc, events = ('start', 'end')):
             if external_index:
                 external_data = data[external_index:category_index]
                 external_keys = get_keys(external_data)
+                external_total += len(external_keys)
                 for key in external_keys:
                     if key not in page_map:
                         page_map[key] = [0, 0, 0, 0, 1, 0]
@@ -211,6 +226,7 @@ for event, elem in etree.iterparse(xml_loc, events = ('start', 'end')):
             elif category_index:
                 data = data[:category_index]
             body_keys = get_keys(data)
+            body_total += len(body_keys)
             for key in body_keys:
                 if len(key) <= 25:
                     if key not in page_map:
@@ -241,3 +257,10 @@ print("file ", file_count)
 file3 = open(index_folder + '/no_of_files.txt', 'w')
 file3.write(str(file_count))
 file3.close()
+
+# print("title = ", title_total / page_count)
+# print("body = ", body_total / page_count)
+# print("category = ", category_total / page_count)
+# print("infobox = ", infobox_total / page_count)
+# print("external_links = ", external_total / page_count)
+# print("references = ", reference_total)
