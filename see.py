@@ -21,8 +21,8 @@ store_step = 1000
 
 
 def write_to_index():
-    file = open(index_folder + '/file' + str(file_count), "w")
-    file2 = open(index_folder + '/id_title_map', "a+")
+    file = open(index_folder + '/file' + str(file_count) + '.txt', "w")
+    file2 = open(index_folder + '/id_title_map.txt', "a+")
     for key in sorted(key_map.keys()):
         file.write(str(key) + ':' + str(key_map[key]) + '\n')
     for key in id_title_map.keys():
@@ -238,6 +238,6 @@ id_title_map.clear()
 file_count += 1
 print("file ", file_count)
 
-file3 = open(index_folder + '/no_of_files', 'w')
+file3 = open(index_folder + '/no_of_files.txt', 'w')
 file3.write(str(file_count))
 file3.close()

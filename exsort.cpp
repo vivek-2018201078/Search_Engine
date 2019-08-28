@@ -29,11 +29,11 @@ int main(int argc, char const *argv[])
     string index_folder = argv[1];
     ifstream nooffiles;
     ofstream outfile (index_folder + "/final.txt");
-    nooffiles.open(index_folder + "/no_of_files");
+    nooffiles.open(index_folder + "/no_of_files.txt");
     nooffiles >> nf;
     nooffiles.close();
 	for(int i = 0; i < nf; i++) {
-		ifstream* f = new ifstream((index_folder + "/file" + to_string(i)).c_str());
+		ifstream* f = new ifstream((index_folder + "/file" + to_string(i) + ".txt").c_str() );
 		fall.push_back(f);
 	}
 
@@ -41,7 +41,7 @@ int main(int argc, char const *argv[])
 	for(int i = 0; i < fall.size(); i++) {
 		//cout << i << "th file" << "\n";
 		if(getline(*fall[i], line)) {
-			//cout << line << "\n";
+		    //cout << line << "\n";
 			pq.push({line, i});
 		}
 	} 
@@ -53,19 +53,20 @@ int main(int argc, char const *argv[])
 		pq.pop();
 		string word = temp.first.substr(0, temp.first.find(':'));
 		string post_list = temp.first.substr(temp.first.find(':') + 1);
-		if(prev_post_list.empty()) {
-		    prev_post_list = post_list;
-		}
 		if(!prev_word.empty() && prev_word == word) {
 		    //cout << "here\n";
 		    prev_post_list = prev_post_list + "|" + post_list;
 		}
 		else {
 		    //insert into file
-		    if(!prev_word.empty())
+		    if(!prev_word.empty()) {
 		        outfile << prev_word << ":" << prev_post_list << "\n";
-		    prev_post_list = "";
+		        prev_post_list = "";
+		    }
             prev_word = word;
+		}
+		if(prev_post_list.empty()) {
+		    prev_post_list = post_list;
 		}
 		//cout << word << " " << post_list << "\n";
 		//cout << temp.first << "   " << temp.second <<"\n";
@@ -74,9 +75,11 @@ int main(int argc, char const *argv[])
 			pq.push({line, filenum});
 		}
 	}
+	if(!prev_word.empty())
+        outfile << prev_word << ":" << prev_post_list << "\n";
     outfile.close();
     for(int i = 0; i < nf; i++) {
-        string filename = index_folder + "/file" + to_string(i);
+        string filename = index_folder + "/file" + to_string(i) + ".txt";
         remove(filename.c_str());
     }
 
