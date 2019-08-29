@@ -74,7 +74,8 @@ def get_list(q, filename):
             break
         f = open('/home/vivek/PycharmProjects/Search_Engine/index/id_title_map.txt')
         id = str(i[0]) + ':'
-        #print(i[1])
+        if i[1] == 0:
+            break
         line = f.readline()
         while line:
             if line.startswith(id):
@@ -89,7 +90,7 @@ def get_list(q, filename):
 
 
 filename = '/home/vivek/PycharmProjects/Search_Engine/index/final.txt'
-query = "title:gandhi body:arjun infobox:gandhi category:gandhi ref:gandhi"
+query = "body:pierfit"
 field = ['title:', 'body:', 'category:', 'infobox:', 'external:', 'ref:']
 q = []
 if any(f in query for f in field):

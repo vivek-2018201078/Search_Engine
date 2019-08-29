@@ -26,6 +26,7 @@ priority_queue<pair<string, int>, vector<pair<string, int>>, comp> pq;
 
 int main(int argc, char const *argv[])
 {
+    cout << "merging intermediate files..\n";
     string index_folder = argv[1];
     ifstream nooffiles;
     ofstream outfile (index_folder + "/final.txt");
@@ -82,6 +83,6 @@ int main(int argc, char const *argv[])
         string filename = index_folder + "/file" + to_string(i) + ".txt";
         remove(filename.c_str());
     }
-
+    cout << "Done\n";
 	return 0;
 }

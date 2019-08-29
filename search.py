@@ -5,7 +5,18 @@ import re
 from operator import add
 
 stemmer = Stemmer('english')
-stop_words = list(stopwords.words('english'))
+stopwords_list = []
+stop_words = set()
+
+try:
+    with open("./stopwords.txt") as input_file:
+        for input_line_raw in input_file:
+            input_tokens = input_line_raw.split(', ')
+            stopwords_list.extend(input_tokens)
+            input_tokens = list(map(stemmer.stemWord, input_tokens))
+        stop_words = set(stopwords_list)
+except:
+    stop_words = set(stopwords.words('english'))
 
 doc_map = {}
 count_map = {}
@@ -109,13 +120,15 @@ def search_query(query, final_index_path, title_path):
                     field = 'ref'
                 else:
                     x = stemmer.stemWord(words[i].lower())
-                    q.append((x + ':', field))
+                    if x not in stop_words:
+                        q.append((x + ':', field))
     else:
         split = re.split(r"[^A-Za-z0-9]+", query)
         q = []
         for t in split:
             t = stemmer.stemWord(t.lower())
-            q.append((t + ':', 'all'))
+            if t not in stop_words:
+                q.append((t + ':', 'all'))
     return get_list(q, final_index_path, title_path)
 
 def read_file(testfile):
@@ -154,7 +167,7 @@ def main():
     queries = read_file(testfile)
     outputs = search(path_to_index, queries)
     write_file(outputs, path_to_output)
-
+    print("Done. Output at:", path_to_output)
 
 if __name__ == '__main__':
     main()
