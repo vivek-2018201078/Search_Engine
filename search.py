@@ -3,13 +3,14 @@ from Stemmer import Stemmer
 from nltk.corpus import stopwords
 import re
 from operator import add
+import os
 
 stemmer = Stemmer('english')
 stopwords_list = []
 stop_words = set()
 
 try:
-    with open("./stopwords.txt") as input_file:
+    with open("stopwords.txt") as input_file:
         for input_line_raw in input_file:
             input_tokens = input_line_raw.split(', ')
             stopwords_list.extend(input_tokens)
@@ -149,8 +150,8 @@ def write_file(outputs, path_to_output):
 
 
 def search(path_to_index, queries):
-    final_index_path = path_to_index + '/final.txt'
-    title_path = path_to_index + '/id_title_map.txt'
+    final_index_path = os.path.join(path_to_index, 'final.txt')
+    title_path = os.path.join(path_to_index, 'id_title_map.txt')
     output = []
     for query in queries:
         temp = search_query(query, final_index_path, title_path)

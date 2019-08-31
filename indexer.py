@@ -4,6 +4,7 @@ import re
 from nltk.corpus import stopwords
 from Stemmer import Stemmer
 from nltk.stem import PorterStemmer
+import os
 
 
 stemmer = Stemmer('english')
@@ -14,7 +15,7 @@ stopwords_list = []
 stop_words = set()
 
 try:
-    with open("./stopwords.txt") as input_file:
+    with open("stopwords.txt") as input_file:
         for input_line_raw in input_file:
             input_tokens = input_line_raw.split(', ')
             stopwords_list.extend(input_tokens)
@@ -41,8 +42,10 @@ store_step = 1000
 
 
 def write_to_index():
-    file = open(index_folder + '/file' + str(file_count) + '.txt', "w")
-    file2 = open(index_folder + '/id_title_map.txt', "a+")
+    filename = 'file' + str(file_count) + '.txt'
+    mapping_file = 'id_title_map.txt'
+    file = open(os.path.join(index_folder, filename), "w")
+    file2 = open(os.path.join(index_folder, mapping_file), "a+")
     for key in sorted(key_map.keys()):
         file.write(str(key) + ':' + str(key_map[key]) + '\n')
     for key in id_title_map.keys():
@@ -267,7 +270,8 @@ key_map.clear()
 id_title_map.clear()
 file_count += 1
 print("Total intermediate files:", file_count)
-file3 = open(index_folder + '/no_of_files.txt', 'w')
+file_count_file = 'no_of_files.txt'
+file3 = open(os.path.join(index_folder, file_count_file), 'w')
 file3.write(str(file_count))
 file3.close()
 
