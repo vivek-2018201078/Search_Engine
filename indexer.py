@@ -38,7 +38,7 @@ key_map = {}
 id_title_map = {}
 page_count = 0
 file_count = 0
-store_step = 1000
+store_step = 10000
 
 
 def write_to_index():
@@ -135,8 +135,9 @@ def get_cats(text):
 
 def update_key_map():
     for key in page_map:
-        if key == '':
+        if len(key) <= 1:
             continue
+            
         title = page_map[key][0]
         body = page_map[key][1]
         category = page_map[key][2]
@@ -260,7 +261,7 @@ for event, elem in etree.iterparse(xml_loc, events = ('start', 'end')):
                 key_map.clear()
                 id_title_map.clear()
                 file_count += 1
-                #print("file ", file_count)
+                print("file ", file_count)
 
         elem.clear()
 
