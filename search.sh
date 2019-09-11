@@ -1,1 +1,1 @@
-python search.py $1 $2 $3
+python file-search.py $1 $2 $3

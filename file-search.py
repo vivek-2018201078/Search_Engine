@@ -3,7 +3,6 @@ from Stemmer import Stemmer
 import re
 from operator import add
 import os
-import timeit
 #import linecache
 
 stemmer = Stemmer('english')
@@ -25,7 +24,7 @@ def get_counts(text, field):
     itr = 0
     if 't' in text:
         if field == 'title' or field == 'all':
-            counts[0] = int(spl[itr]) * 500
+            counts[0] = int(spl[itr]) * 200
         itr += 1
     if 'b' in text:
         if field == 'body' or field == 'all':
@@ -33,19 +32,19 @@ def get_counts(text, field):
         itr += 1
     if 'c' in text:
         if field == 'category' or field == 'all':
-            counts[2] = int(spl[itr])
+            counts[2] = int(spl[itr]) * 20
         itr += 1
     if 'i' in text:
         if field == 'infobox' or field == 'all':
-            counts[3] = int(spl[itr])
+            counts[3] = int(spl[itr]) * 40
         itr += 1
     if 'e' in text:
         if field == 'ext' or field == 'all':
-            counts[4] = int(spl[itr])
+            counts[4] = int(spl[itr]) * 15
         itr += 1
     if 'r' in text:
         if field == 'ref' or field == 'all':
-            counts[5] = int(spl[itr])
+            counts[5] = int(spl[itr]) * 10
         itr += 1
     return counts
 
@@ -55,9 +54,9 @@ def blocks(files, size=65536):
         if not b: break
         yield b
 
-def getline(word, field, filename, path_to_index):
+def getline(word, field, filename):
     linecount = 0
-    line_counts_file = os.path.join(path_to_index, "line_counts.txt")
+    line_counts_file = os.path.join(sys.argv[1], "line_counts.txt")
     f = open(line_counts_file, 'r')
     while True:
         temp_line = f.readline()
@@ -73,12 +72,26 @@ def getline(word, field, filename, path_to_index):
     # high = linecount
     line = ""
    #print(word, " ", linecount, filename)
-    full_filename = os.path.join(path_to_index, filename)
+    full_filename = os.path.join(sys.argv[1], filename)
     with open(full_filename) as fp:
         for curr_line in fp:
             if curr_line.startswith(word):
                 line = curr_line
                 break
+
+    # while low < high:
+    #     mid = (low + high) // 2
+    #     curr_line = linecache.getline(full_filename, mid)
+    #     curr_list = curr_line.split(':')
+    #     curr_key = curr_list[0]
+    #     if curr_key == word:
+    #         line = curr_line
+    #         break
+    #     elif curr_key < word:
+    #         low = mid + 1
+    #     else:
+    #         high = mid - 1
+
     #print("parsed")
     if line == "":
         return
@@ -95,24 +108,20 @@ def getline(word, field, filename, path_to_index):
             doc_map[doc_no] = list(map(add, counts, doc_map[doc_no]))
 
 
-def get_list(q, path_to_index, full_query):
-    visited = []
+def get_list(q, path_to_index, title_path):
     for word, field in q:
-        if (word, field) in visited:
-            continue
         filename = word[:2] + ".txt"
         final_index_path = os.path.join(path_to_index, filename)
         if not os.path.exists(final_index_path):
             continue
-        getline(word, field, filename, path_to_index)
-        visited.append((word, field))
+        getline(word, field, filename)
     for doc in doc_map.keys():
         count_map[doc] = sum(doc_map[doc])
+
 
     list = sorted(count_map.items(), reverse=True, key=lambda x: x[1])
     itr = 0
     ans = []
-    excludes = ["Wikipedia:", "Help:", "File:", "Template:"]
     for i in list:
         if itr == 10:
             break
@@ -128,13 +137,10 @@ def get_list(q, path_to_index, full_query):
         #print("got line")
         f, colon, title = line.partition(':')
         title = title[:-1]
-        if any(ex in title for ex in excludes):
-            continue
-        #print(i[0], title)
         ans.append(title)
         itr += 1
     return ans
-def search_query(query, path_to_index):
+def search_query(query, path_to_index, title_path):
     field = ['title:', 'body:', 'category:', 'infobox:', 'external:', 'ref:']
     q = []
     if any(f in query for f in field):
@@ -166,33 +172,46 @@ def search_query(query, path_to_index):
             t = stemmer.stemWord(t.lower())
             if t not in stop_words:
                 q.append((t, 'all'))
-    return get_list(q, path_to_index, query)
+    return get_list(q, path_to_index, title_path)
 
-def search(path_to_index, query):
-    output = search_query(query, path_to_index)
-    doc_map.clear()
-    count_map.clear()
+def read_file(testfile):
+    with open(testfile, 'r') as file:
+        queries = file.readlines()
+    return queries
+
+
+def write_file(outputs, path_to_output):
+    '''outputs should be a list of lists.
+        len(outputs) = number of queries
+        Each element in outputs should be a list of titles corresponding to a particular query.'''
+    with open(path_to_output, 'w') as file:
+        for output in outputs:
+            for line in output:
+                file.write(line.strip() + '\n')
+            file.write('\n')
+
+
+def search(path_to_index, queries):
+    #final_index_path = os.path.join(path_to_index, 'final.txt')
+    title_path = os.path.join(path_to_index, 'id_title_map.txt')
+    output = []
+    for query in queries:
+        temp = search_query(query, path_to_index, title_path)
+        output.append(temp)
+        #print("QUERY DONE...")
+        doc_map.clear()
+        count_map.clear()
     return output
 
 def main():
     path_to_index = sys.argv[1]
-    while(True):
-        more_query = input("Query? y/n:")
-        more_query = more_query.lower()
-        if more_query == 'n':
-            break
-        if not more_query == 'y':
-            continue
-        curr_query = input("Search:")
-        start_time = timeit.default_timer()
-        output = search(path_to_index, curr_query)
-        stop_time = timeit.default_timer()
-        print("***********Results************")
-        for out in output:
-            print(out)
-        print("******************************")
-        print("Time:", stop_time - start_time, "seconds")
+    testfile = sys.argv[2]
+    path_to_output = sys.argv[3]
 
+    queries = read_file(testfile)
+    outputs = search(path_to_index, queries)
+    write_file(outputs, path_to_output)
+    print("Done. Output at:", path_to_output)
 
 if __name__ == '__main__':
     main()
