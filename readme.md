@@ -25,7 +25,7 @@ For file as query input and to store results in file-
 Query input is given line by line in file.
 Top 10 results are retrieved and stored in file.
 
-###Filed Query tokens:
+##Field Query tokens:
 To search 'x' in particular field:
 
 Title - "title:x"  
