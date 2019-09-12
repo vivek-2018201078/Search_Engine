@@ -4,11 +4,14 @@ import re
 from operator import add
 import os
 import timeit
+import math
 #import linecache
 
 stemmer = Stemmer('english')
 stopwords_list = []
 stop_words = set()
+
+total_docs = 19567269
 
 
 with open("stopwords.txt") as input_file:
@@ -18,35 +21,35 @@ with open("stopwords.txt") as input_file:
         input_tokens = list(map(stemmer.stemWord, input_tokens))
     stop_words = set(input_tokens)
 doc_map = {}
-count_map = {}
 def get_counts(text, field):
     counts = [0] * 6
     spl = re.findall(r'\d+', text)
     itr = 0
     if 't' in text:
         if field == 'title' or field == 'all':
-            counts[0] = int(spl[itr]) * 500
+            counts[0] = min(1, int(spl[itr])) * 300
         itr += 1
     if 'b' in text:
         if field == 'body' or field == 'all':
-            counts[1] = int(spl[itr])
+            counts[1] = min(int(spl[itr]), 100)
         itr += 1
     if 'c' in text:
         if field == 'category' or field == 'all':
-            counts[2] = int(spl[itr])
+            counts[2] = min(int(spl[itr]), 10)
         itr += 1
     if 'i' in text:
         if field == 'infobox' or field == 'all':
-            counts[3] = int(spl[itr])
+            counts[3] = min(10, int(spl[itr]))
         itr += 1
     if 'e' in text:
         if field == 'ext' or field == 'all':
-            counts[4] = int(spl[itr])
+            counts[4] = min(10, int(spl[itr]))
         itr += 1
     if 'r' in text:
         if field == 'ref' or field == 'all':
-            counts[5] = int(spl[itr])
+            counts[5] = min(10, int(spl[itr]))
         itr += 1
+    #print(counts)
     return counts
 
 def blocks(files, size=65536):
@@ -57,6 +60,7 @@ def blocks(files, size=65536):
 
 def getline(word, field, filename, path_to_index):
     linecount = 0
+    #print(word, field)
     line_counts_file = os.path.join(path_to_index, "line_counts.txt")
     f = open(line_counts_file, 'r')
     while True:
@@ -69,8 +73,6 @@ def getline(word, field, filename, path_to_index):
             break
     f.close()
 
-    # low = 1
-    # high = linecount
     line = ""
    #print(word, " ", linecount, filename)
     full_filename = os.path.join(path_to_index, filename)
@@ -85,14 +87,19 @@ def getline(word, field, filename, path_to_index):
 
     key, index = line.split(':')
     docs = index.split('|')
+    word_docs = len(docs)
+    idf = math.log10(total_docs/ word_docs)
+    #print(idf)
     for doc in docs:
         doc_no, doc_index = doc.split('-')
         doc_no = doc_no[1:]
         counts = get_counts(doc_index, field)
+        temp_sum = sum(counts) * idf
         if doc_no not in doc_map:
-            doc_map[doc_no] = counts
+            doc_map[doc_no] = temp_sum
         else:
-            doc_map[doc_no] = list(map(add, counts, doc_map[doc_no]))
+            doc_map[doc_no] += temp_sum
+        #print(doc_map[doc_no])
 
 
 def get_list(q, path_to_index, full_query):
@@ -106,15 +113,14 @@ def get_list(q, path_to_index, full_query):
             continue
         getline(word, field, filename, path_to_index)
         visited.append((word, field))
-    for doc in doc_map.keys():
-        count_map[doc] = sum(doc_map[doc])
-
-    list = sorted(count_map.items(), reverse=True, key=lambda x: x[1])
+    list = sorted(doc_map.items(), reverse=True, key=lambda x: x[1])
     itr = 0
     ans = []
-    excludes = ["Wikipedia:", "Help:", "File:", "Template:"]
+    excludes = ["Wikipedia:", "Help:", "File:", "Template:", "Category:"]
     for i in list:
         if itr == 10:
+            break
+        if int(i[1]) == 0:
             break
         temp = str(int(i[0]) // 100000)
         id_file_name = "titles-" + temp + ".txt"
@@ -122,7 +128,7 @@ def get_list(q, path_to_index, full_query):
         #print(id_file_path)
         with open(id_file_path) as fp:
             for curr_line in fp:
-                if curr_line.startswith(i[0]):
+                if curr_line.startswith(i[0] + ":"):
                     line = curr_line
         #line = linecache.getline(title_path, int(i[0]))
         #print("got line")
@@ -135,7 +141,7 @@ def get_list(q, path_to_index, full_query):
         itr += 1
     return ans
 def search_query(query, path_to_index):
-    field = ['title:', 'body:', 'category:', 'infobox:', 'external:', 'ref:']
+    field = ['title:', 'body:', 'category:', 'infobox:', 'ext:', 'ref:']
     q = []
     if any(f in query for f in field):
         temp = re.split(':', query)
@@ -171,7 +177,6 @@ def search_query(query, path_to_index):
 def search(path_to_index, query):
     output = search_query(query, path_to_index)
     doc_map.clear()
-    count_map.clear()
     return output
 
 def main():
